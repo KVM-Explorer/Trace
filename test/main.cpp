@@ -3,14 +3,14 @@
 #include "../src/AnalysisData.hpp"
 #include "../src/DataFilter.hpp"
 #include "../src/ShowLidarData.hpp"
-
+#include "../src/Trace.hpp"
 int main() {
 
     std::string PortName1 = "/dev/ttyUSB0";
 
     LidarDriver::SerialConnection serial_connection;
     LidarDriver::AnalysisData analysis_data;
-
+    Algorithm::Trace trace_algrorithm;
 
 
     serial_connection.FastOpen(PortName1);
@@ -31,7 +31,7 @@ int main() {
                 LidarScannerData lidar_data=analysis_data.GetLidarScanData();
                 //todo 设置加速度和当前速度;
                 lidar_data=DataFilter::LidarDataFilter(lidar_data);
-                float angle;
+                float angle =trace_algrorithm.GetDrivingDirection(lidar_data);
 
                 ShowLidarData::ShowLidarChart(lidar_data);
                 std::cout<<angle<<std::endl;
