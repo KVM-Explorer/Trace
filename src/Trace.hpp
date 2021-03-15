@@ -10,9 +10,9 @@ namespace Algorithm
             LastLeft=1 ;
             LastRight=1 ;
             LastIsStraight= false;
-            MinInterval = 0.1;
+            MinInterval = 0.05;
             MinDistance = 2;
-            CarWidth = 0.5
+            CarWidth = 0.5;
         }
         ~Trace(){};
         float GetDrivingDirection(LidarDriver::LidarScannerData &data);

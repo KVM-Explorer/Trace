@@ -13,7 +13,9 @@ void ShowLidarData::ShowLidarChart(LidarScannerData lidar_data)
     int sx,sy;
     int maxx=10;
     sx=sy=400;
-
+    cv::line(image,cv::Point(400,400),cv::Point(700,100),cv::Scalar(0,0,255));
+    cv::line(image,cv::Point(400,400),cv::Point(100,100),cv::Scalar(0,0,255));
+    cv::line(image,cv::Point(100,400),cv::Point(700,400),cv::Scalar(0,0,255));
     for(int i=0;i<lidar_data.GetSize();i++)
     {
         float angle = lidar_data.angle[i];

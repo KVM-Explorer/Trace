@@ -6,14 +6,18 @@ float Algorithm::Trace::GetDrivingDirection(LidarDriver::LidarScannerData &data)
     lidar_data.Clear();
     int state;
     float angle=255;
+    //rebuild and store data
+    //log: exist a bug:  turn right or left and move in straight corridor direction is 255
+    //                  right is obvious ,left seem none
+    //reason:   Datafilter filte <0.15m data thus there are no data 150~180 then cause the problem
 
     for(int i=0;i<data.GetSize();i++)
     {
-        if(data.angle[i]>180)break;
+        if(data.angle[i]>=180)break;
         lidar_data.angle.push_back(data.angle[i]);
         lidar_data.distance.push_back(data.distance[i]);
     }
-    int is_continous=-1;
+    int is_continous=-1;//-1 no 1 left 2 right
     for(int i=1;i<lidar_data.GetSize();i++)
     {
         if(std::abs(lidar_data.distance[i]-lidar_data.distance[i-1])>0.1)break;
@@ -30,21 +34,20 @@ float Algorithm::Trace::GetDrivingDirection(LidarDriver::LidarScannerData &data)
             break;
         }
     }
-
     switch (is_continous) {
         case -1:        //无连续
             break;
         case 1:         //左连续
             state=IsApprochingWall(lidar_data.distance[0],LastLeft);
             if(state==0){angle= 90;}
-            if(state==1){angle= 135;}
-            if(state==-1){angle= 45;}
-            break;
-        case 2:         //右连续
-            state=IsApprochingWall(lidar_data.distance[0],LastRight);
-            if(state==0){angle= 90;}
             if(state==1){angle= 45;}
             if(state==-1){angle= 135;}
+            break;
+        case 2:         //右连续
+            state=IsApprochingWall(lidar_data.distance[lidar_data.GetSize()-1],LastRight);
+            if(state==0){angle= 90;}
+            if(state==1){angle= 135;}
+            if(state==-1){angle= 45;}
             break;
         default:
             break;
@@ -52,44 +55,48 @@ float Algorithm::Trace::GetDrivingDirection(LidarDriver::LidarScannerData &data)
     //updata Last position1
     LastLeft=lidar_data.distance[0];
     LastRight=lidar_data.distance[lidar_data.GetSize()-1];
-    if(LastIsStraight == true){angle=90;}
-    if(angle==90)
-    {
-        bool Flag = false; // whether exist a interval that distance > MinDiatance
-        float start_angle;
-        float end_angle;
-        float max_delta_theta=0;
-        float result=-1;
-        for(int i=0;i<lidar_data.GetSize();i++)
-        {
-            if(lidar_data.angle[i]<30||lidar_data.angle[i]>150)continue;
-            //select accessible interval
-            if(lidar_data.distance[i]>MinDistance&&!Flag){
-                Flag= true;
-                start_angle=lidar_data.angle[i];
-            }
-
-            if(lidar_data.distance[i]<MinDistance&&Flag)
-            {
-                Flag= false;
-                end_angle=lidar_data.angle[i];
-                //select best(max) interval and through move horizontally to align the accessible area
-                if(end_angle-start_angle>max_delta_theta&&IsPassGate(start_angle,end_angle)){
-                    max_delta_theta=end_angle-start_angle;
-                    result = (start_angle+end_angle)/2.0;
-                }
-            }
-        }
-        //LastIsStraight is a state lock about horizontal movement
-        if(result!=-1){
-            if(result>90)   {LastIsStraight=true;  return 180;}
-            if(result==90)  {LastIsStraight= false; return 90;}
-            if(result<90)   {LastIsStraight=true; return 0;}
-        }else{
-            //there is no accessible way to go
-            return 255;
-        }
-    }
+    std::cout<<"LastLeft="<<LastLeft<<std::endl;
+//    if(LastIsStraight == true){angle=90;}
+//    if(angle==90)
+//    {
+//        bool Flag = false; // whether exist a interval that distance > MinDiatance
+//        float start_angle;
+//        float end_angle;
+//        float max_delta_theta=0;
+//        float result=-1;
+//        for(int i=0;i<lidar_data.GetSize();i++)
+//        {
+//            if(lidar_data.angle[i]<30||lidar_data.angle[i]>150)continue;
+//            //select accessible interval
+//            if(lidar_data.distance[i]>MinDistance&&!Flag){
+//                Flag= true;
+//                start_angle=lidar_data.angle[i];
+//            }
+//
+//            if(lidar_data.distance[i]<MinDistance&&Flag)
+//            {
+//                Flag= false;
+//                end_angle=lidar_data.angle[i];
+//                //select best(max) interval and through move horizontally to align the accessible area
+//                if(end_angle-start_angle>max_delta_theta
+////                &&IsPassGate(start_angle,end_angle)
+//                    ){
+//                    max_delta_theta=end_angle-start_angle;
+//                    result = (start_angle+end_angle)/2.0;
+//                }
+//            }
+//        }
+//        //LastIsStraight is a state lock about horizontal movement
+//        if(result!=-1){
+//            std::cout<<"Recommend:"<<result<<std::endl;
+//            if(result>95)   {LastIsStraight=true;  return 180;}
+//            if(result<85)   {LastIsStraight=true; return 0;}
+//                             LastIsStraight= false; return 90;
+//        }else{
+//            //there is no accessible way to go
+//            return 255;
+//        }
+//    }
     return angle;
 }
 /**
